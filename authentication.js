@@ -88,7 +88,8 @@ app.post('/verify-otp', async (req, res) => {
             const user = {
                 email: tempUser.email,
                 password: tempUser.password,
-                userId
+                userId,
+                userType: 'new_user' 
             };
 
             await userCollection.insertOne(user);
@@ -105,7 +106,7 @@ app.post('/verify-otp', async (req, res) => {
                 if (error) {
                     return res.status(500).send(error.toString());
                 }
-                res.send('OTP verified and user created');
+                res.send({ message: 'OTP verified and user created', userId });
             });
         } else {
             res.status(400).send('OTP expired');
@@ -126,7 +127,26 @@ app.post('/fetch-user', async (req, res) => {
     } else if (user.password !== password) {
         res.status(400).send('Password error');
     } else {
-        res.send('Login allowed');
+        res.send({ message: 'Login allowed', userId: user.userId });
+    }
+});
+
+app.get('/get-user-info', async (req, res) => {
+    const { userId } = req.query;
+    const userCollection = client.db("test").collection("User");
+
+    const user = await userCollection.findOne({ userId });
+
+    if (!user) {
+        res.status(400).send('User not found');
+    } else {
+        if (user.userType === 'new_user') {
+            res.send({ userType: 'new_user' });
+        } else if (user.userType === 'existing_user') {
+            res.send({ userType: 'existing_user', name: user.name });
+        }else{
+            res.status(400).send('User type not found');
+        }
     }
 });
 
