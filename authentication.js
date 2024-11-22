@@ -179,6 +179,31 @@ app.post('/update-user-details', async (req, res) => {
     }
 });
 
+app.post('/jhingalala', async (req, res) => {
+    const { userId } = req.body;
+    const userCollection = client.db("test").collection("User");
+
+    const user = await userCollection.findOne({ userId });
+
+    if (!user) {
+        res.status(400).send('User not found');
+    } else {
+        if (user.userType === 'new_user') {
+            res.send({ userType: 'new_user' });
+        } else if (user.userType === 'existing_user') {
+            res.send({ 
+                userType: 'existing_user', 
+                name: user.name, 
+                email: user.email, 
+                phoneNumber: user.phoneNumber, 
+                location: user.location 
+            });
+        } else {
+            res.status(400).send('User type not found');
+        }
+    }
+});
+
 app.listen(5000, () => {
     console.log('Server is running on port 5000');
 });
