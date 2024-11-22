@@ -154,18 +154,22 @@ app.post('/update-user-details', async (req, res) => {
     const { name, email, location, phoneNumber } = req.body;
     const userCollection = client.db("test").collection("User");
 
-    const user = await userCollection.findOne({ email });
+    try {
+        const user = await userCollection.findOne({ email });
 
-    if (!user) {
-        res.status(400).send('Email not found');
-    } else if (user.userType === 'new_user') {
-        await userCollection.updateOne(
-            { email },
-            { $set: { name, location, phoneNumber, userType: 'existing_user' } }
-        );
-        res.send('User details updated and userType changed to existing_user');
-    } else {
-        res.status(400).send('User is already an existing user');
+        if (!user) {
+            res.status(400).send('Email not found');
+        } else if (user.userType === 'new_user') {
+            await userCollection.updateOne(
+                { email },
+                { $set: { name, location, phoneNumber, userType: 'existing_user' } }
+            );
+            res.send('User details updated and userType changed to existing_user');
+        } else {
+            res.status(400).send('User is already an existing user');
+        }
+    } catch (error) {
+        res.status(500).send('Error occurred while searching for the user');
     }
 });
 
