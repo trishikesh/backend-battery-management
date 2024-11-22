@@ -150,6 +150,25 @@ app.get('/get-user-info', async (req, res) => {
     }
 });
 
+app.post('/update-user-details', async (req, res) => {
+    const { name, email, location, phoneNumber } = req.body;
+    const userCollection = client.db("test").collection("User");
+
+    const user = await userCollection.findOne({ email });
+
+    if (!user) {
+        res.status(400).send('Email not found');
+    } else if (user.userType === 'new_user') {
+        await userCollection.updateOne(
+            { email },
+            { $set: { name, location, phoneNumber, userType: 'existing_user' } }
+        );
+        res.send('User details updated and userType changed to existing_user');
+    } else {
+        res.status(400).send('User is already an existing user');
+    }
+});
+
 app.listen(5000, () => {
     console.log('Server is running on port 5000');
 });
