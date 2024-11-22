@@ -160,15 +160,30 @@ app.post('/update-user-details', async (req, res) => {
         if (!user) {
             res.status(400).send('User not found');
         } else if (user.userType === 'new_user') {
+            // Only include fields that have values
+            const updateFields = {};
+            if (name) updateFields.name = name;
+            if (email) updateFields.email = email;
+            if (location) updateFields.location = location;
+            if (phoneNumber) updateFields.phoneNumber = phoneNumber;
+            updateFields.userType = 'existing_user';
+
             await userCollection.updateOne(
                 { userId },
-                { $set: { name, email, location, phoneNumber, userType: 'existing_user' } }
+                { $set: updateFields }
             );
             res.send('User details added and userType changed to existing_user');
         } else if (user.userType === 'existing_user') {
+            // Only update fields that have values
+            const updateFields = {};
+            if (name) updateFields.name = name;
+            if (email) updateFields.email = email;
+            if (location) updateFields.location = location;
+            if (phoneNumber) updateFields.phoneNumber = phoneNumber;
+
             await userCollection.updateOne(
                 { userId },
-                { $set: { name, email, location, phoneNumber } }
+                { $set: updateFields }
             );
             res.send('User details updated');
         } else {
