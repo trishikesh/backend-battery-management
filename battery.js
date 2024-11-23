@@ -2,7 +2,14 @@ const { MongoClient } = require('mongodb');
 const express = require('express');
 const cors = require('cors');
 const app = express();
-app.use(cors()); // Enable CORS for all routes
+
+// Enable CORS with specific options
+app.use(cors({
+    origin: '*', // Allow all origins
+    methods: ['GET', 'POST'], // Allow both GET and POST methods
+    allowedHeaders: ['Content-Type'] // Allow Content-Type header
+}));
+
 app.use(express.json());
 
 // Use the centralized MongoDB URI
@@ -34,7 +41,11 @@ function generateRandomMonthlyData() {
     }));
 }
 
+// Explicitly define route with full path
 app.post('/set-battery', async (req, res) => {
+    console.log('Received POST request to /set-battery');
+    console.log('Request body:', req.body);
+
     const { userId, "Battery Name": batteryName, "Battery Type": batteryType, 
             Manufacturer, "Activation Date": activationDate, 
             "Expected End Date": expectedEndDate } = req.body;
@@ -78,10 +89,10 @@ app.post('/set-battery', async (req, res) => {
             }
         }, 60000); // Update every minute
         
-        res.send('Battery data saved successfully');
+        res.status(200).json({ message: 'Battery data saved successfully' });
     } catch (error) {
         console.error('Error saving battery data:', error);
-        res.status(500).send('Error occurred while saving battery data');
+        res.status(500).json({ error: 'Error occurred while saving battery data' });
     }
 });
 
@@ -92,16 +103,28 @@ app.get('/fetch-battery', async (req, res) => {
     try {
         const batteries = await batteryCollection.find({ userId }).toArray();
         if (batteries.length === 0) {
-            res.status(404).send('No batteries found for this user');
+            res.status(404).json({ error: 'No batteries found for this user' });
         } else {
-            res.send(batteries);
+            res.status(200).json(batteries);
         }
     } catch (error) {
         console.error('Error fetching batteries:', error);
-        res.status(500).send('Error occurred while fetching batteries');
+        res.status(500).json({ error: 'Error occurred while fetching batteries' });
     }
 });
 
-app.listen(process.env.PORT, () => {
-    console.log(`Battery server is running on port ${process.env.PORT}`);
+// Add error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Something broke!' });
+});
+
+// Add 404 handler for undefined routes
+app.use((req, res) => {
+    res.status(404).json({ error: `Cannot ${req.method} ${req.url}` });
+});
+
+const port = process.env.PORT || 5001;
+app.listen(port, () => {
+    console.log(`Battery server is running on port ${port}`);
 });
