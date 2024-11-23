@@ -160,7 +160,7 @@ app.post('/update-user-details', async (req, res) => {
         if (!user) {
             res.status(400).send('User not found');
         } else if (user.userType === 'new_user') {
-            // Only include fields that have values
+            // Create new fields for new user and update values
             const updateFields = {};
             if (name) updateFields.name = name;
             if (email) updateFields.email = email;
@@ -168,28 +168,39 @@ app.post('/update-user-details', async (req, res) => {
             if (phoneNumber) updateFields.phoneNumber = phoneNumber;
             updateFields.userType = 'existing_user';
 
-            await userCollection.updateOne(
+            const result = await userCollection.updateOne(
                 { userId },
                 { $set: updateFields }
             );
-            res.send('User details added and userType changed to existing_user');
+
+            if (result.matchedCount === 1) {
+                res.send('User details added and userType changed to existing_user');
+            } else {
+                res.status(500).send('Failed to update user details');
+            }
         } else if (user.userType === 'existing_user') {
-            // Only update fields that have values
+            // Update existing user fields with new values
             const updateFields = {};
             if (name) updateFields.name = name;
             if (email) updateFields.email = email;
             if (location) updateFields.location = location;
             if (phoneNumber) updateFields.phoneNumber = phoneNumber;
 
-            await userCollection.updateOne(
+            const result = await userCollection.updateOne(
                 { userId },
                 { $set: updateFields }
             );
-            res.send('User details updated');
+
+            if (result.matchedCount === 1) {
+                res.send('User details updated successfully');
+            } else {
+                res.status(500).send('Failed to update user details');
+            }
         } else {
             res.status(400).send('Invalid user type');
         }
     } catch (error) {
+        console.error('Error updating user details:', error);
         res.status(500).send('Error occurred while updating user details');
     }
 });
