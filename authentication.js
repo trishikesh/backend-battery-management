@@ -328,7 +328,7 @@ app.post('/set-battery', async (req, res) => {
     }
 });
 
-app.post('/fetch-battery', async (req, res) => {
+app.get('/fetch-battery', async (req, res) => {
     try {
         const { userId } = req.body;
         const batteryCollection = client.db("test").collection("batteryData");
