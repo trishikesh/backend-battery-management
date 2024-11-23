@@ -8,15 +8,16 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-const mongoUri = "mongodb+srv://voltrack:voltrack@cluster0.aqxdxqm.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-const client = new MongoClient(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true });
+const mongoUri = "mongodb+srv://voltrack:voltrack@cluster0.aqxdxqm.mongodb.net/test?retryWrites=true&w=majority";
+const client = new MongoClient(mongoUri);
 
 async function connectToMongo() {
     try {
         await client.connect();
         console.log("Connected to MongoDB");
     } catch (e) {
-        console.error(e);
+        console.error("MongoDB connection error:", e);
+        process.exit(1);
     }
 }
 
