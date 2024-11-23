@@ -294,6 +294,29 @@ app.post('/set-battery', async (req, res) => {
         const result = await batteryCollection.insertOne(batteryDetails);
 
         if (result.acknowledged) {
+            // Set up hourly status updates
+            setInterval(async () => {
+                const newStatus = Math.random() < 0.5 ? 'charged' : 'unplugged';
+                let newStateOfCharge = stateOfCharge;
+
+                if (newStatus === 'charged') {
+                    newStateOfCharge = Math.min(100, newStateOfCharge + 1);
+                } else {
+                    newStateOfCharge = Math.max(1, newStateOfCharge - 1);
+                }
+
+                await batteryCollection.updateOne(
+                    { userId },
+                    { 
+                        $set: { 
+                            status: newStatus,
+                            stateOfCharge: newStateOfCharge,
+                            lastUpdated: new Date()
+                        }
+                    }
+                );
+            }, 60 * 60 * 1000); // Update every hour
+
             res.send({ message: 'Battery details saved successfully' });
         } else {
             res.status(500).send('Failed to save battery details');
