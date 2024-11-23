@@ -243,6 +243,30 @@ function startAuthServer(port, mongoUri) {
         const batteryCollection = client.db("test").collection("batteryData");
 
         try {
+            // Generate random status and initial state of charge
+            const status = Math.random() < 0.5 ? 'charged' : 'unplugged';
+            let stateOfCharge = Math.floor(Math.random() * 100) + 1;
+
+            // Adjust state of charge based on status
+            if (status === 'charged') {
+                stateOfCharge = Math.min(100, stateOfCharge + 1);
+            } else {
+                stateOfCharge = Math.max(1, stateOfCharge - 1);
+            }
+
+            // Generate random monthly state of charge data
+            const monthlyData = [
+                { month: 'Jan', avgCharge: Math.floor(Math.random() * 100) + 1 },
+                { month: 'Feb', avgCharge: Math.floor(Math.random() * 100) + 1 },
+                { month: 'Mar', avgCharge: Math.floor(Math.random() * 100) + 1 },
+                { month: 'Apr', avgCharge: Math.floor(Math.random() * 100) + 1 },
+                { month: 'May', avgCharge: Math.floor(Math.random() * 100) + 1 },
+                { month: 'Jun', avgCharge: Math.floor(Math.random() * 100) + 1 },
+                { month: 'Jul', avgCharge: Math.floor(Math.random() * 100) + 1 },
+                { month: 'Aug', avgCharge: Math.floor(Math.random() * 100) + 1 },
+                { month: 'Sep', avgCharge: Math.floor(Math.random() * 100) + 1 }
+            ];
+
             const batteryDetails = {
                 userId,
                 activationDate,
@@ -250,6 +274,9 @@ function startAuthServer(port, mongoUri) {
                 batteryType, 
                 expectedEndDate,
                 manufacturer,
+                status,
+                stateOfCharge,
+                monthlyChargeData: monthlyData,
                 createdAt: new Date()
             };
 
