@@ -331,7 +331,7 @@ app.post('/set-battery', async (req, res) => {
 app.post('/fetch-battery', async (req, res) => {
     try {
         const { userId } = req.body;
-        const batteryCollection = client.db("test").collection("Battery");
+        const batteryCollection = client.db("test").collection("batteryData");
 
         const batteries = await batteryCollection.find({ userId }).toArray();
 
