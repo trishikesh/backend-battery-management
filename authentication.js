@@ -328,6 +328,27 @@ app.post('/set-battery', async (req, res) => {
     }
 });
 
+app.post('/fetch-battery', async (req, res) => {
+    try {
+        const { userId } = req.body;
+        const batteryCollection = client.db("test").collection("Battery");
+
+        const batteries = await batteryCollection.find({ userId }).toArray();
+
+        if (batteries.length > 0) {
+            res.send(batteries);
+        } else {
+            res.status(404).send({ message: 'No batteries found for this user' });
+        }
+
+    } catch (error) {
+        console.error('Error fetching battery details:', error);
+        res.status(500).send('Error occurred while fetching battery details');
+    }
+});
+
+
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Authentication server is running on port ${PORT}`);
