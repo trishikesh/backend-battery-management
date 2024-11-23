@@ -230,6 +230,43 @@ function startAuthServer(port, mongoUri) {
         }
     });
 
+    app.post('/set-battery', async (req, res) => {
+        const { 
+            userId,
+            activationDate,
+            batteryName, 
+            batteryType,
+            expectedEndDate,
+            manufacturer
+        } = req.body;
+
+        const batteryCollection = client.db("test").collection("batteryData");
+
+        try {
+            const batteryDetails = {
+                userId,
+                activationDate,
+                batteryName,
+                batteryType, 
+                expectedEndDate,
+                manufacturer,
+                createdAt: new Date()
+            };
+
+            const result = await batteryCollection.insertOne(batteryDetails);
+
+            if (result.acknowledged) {
+                res.send({ message: 'Battery details saved successfully' });
+            } else {
+                res.status(500).send('Failed to save battery details');
+            }
+
+        } catch (error) {
+            console.error('Error saving battery details:', error);
+            res.status(500).send('Error occurred while saving battery details');
+        }
+    });
+
     app.listen(port, () => {
         console.log(`Authentication server is running on port ${port}`);
     });
