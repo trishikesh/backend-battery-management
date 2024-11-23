@@ -8,20 +8,30 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-const mongoUri = "mongodb+srv://voltrack:voltrack@cluster0.aqxdxqm.mongodb.net/test?retryWrites=true&w=majority";
-const client = new MongoClient(mongoUri);
+const mongoUri = "mongodb+srv://trial1:t1@trial-01.y8cbq.mongodb.net/";
+const client = new MongoClient(mongoUri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverApi: {
+        version: '1',
+        strict: true,
+        deprecationErrors: true,
+    }
+});
 
 async function connectToMongo() {
     try {
         await client.connect();
+        await client.db("admin").command({ ping: 1 });
         console.log("Connected to MongoDB");
     } catch (e) {
         console.error("MongoDB connection error:", e);
-        process.exit(1);
+        // Instead of exiting, we'll keep the server running but log the error
+        console.log("Server will continue running, but MongoDB features may not work");
     }
 }
 
-connectToMongo();
+connectToMongo().catch(console.dir);
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
