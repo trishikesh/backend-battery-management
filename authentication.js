@@ -8,7 +8,8 @@ const app = express();
 app.use(express.json());
 app.use(cors()); // Enable CORS for all routes
 
-const uri = "mongodb+srv://trial1:t1@trial-01.y8cbq.mongodb.net/";
+// Use the centralized MongoDB URI
+const uri = process.env.MONGO_URI;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 async function connectToMongo() {
@@ -230,6 +231,6 @@ app.post('/jhingalala', async (req, res) => {
     }
 });
 
-app.listen(5000, () => {
-    console.log('Server is running on port 5000');
+app.listen(process.env.PORT, () => {
+    console.log(`Authentication server is running on port ${process.env.PORT}`);
 });
