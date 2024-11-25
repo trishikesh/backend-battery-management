@@ -161,7 +161,7 @@ app.get('/get-user-info', async (req, res) => {
     }
 });
 
-app.post('/update-user-details', async (req, res) => {
+app.patch('/update-user-details', async (req, res) => {
     const { userId, name, email, location, phoneNumber } = req.body;
     const userCollection = client.db("test").collection("User");
 
@@ -169,47 +169,48 @@ app.post('/update-user-details', async (req, res) => {
         const user = await userCollection.findOne({ userId });
 
         if (!user) {
-            res.status(400).send('User not found');
-        } else if (user.userType === 'new_user') {
-            // Create new fields for new user and update values
-            const updateFields = {};
-            if (name) updateFields.name = name;
-            if (email) updateFields.email = email;
-            if (location) updateFields.location = location;
-            if (phoneNumber) updateFields.phoneNumber = phoneNumber;
+            return res.status(404).send('User not registered');
+        }
+
+        // Compare and only update changed fields
+        const updateFields = {};
+        if (name && name !== user.name) updateFields.name = name;
+        if (email && email !== user.email) updateFields.email = email;
+        if (location && location !== user.location) updateFields.location = location;
+        if (phoneNumber && phoneNumber !== user.phoneNumber) updateFields.phoneNumber = phoneNumber;
+
+        // Set userType to existing_user if it's not already
+        if (user.userType !== 'existing_user') {
             updateFields.userType = 'existing_user';
+        }
 
+        // Only update if there are changes
+        if (Object.keys(updateFields).length > 0) {
             const result = await userCollection.updateOne(
                 { userId },
                 { $set: updateFields }
             );
 
             if (result.matchedCount === 1) {
-                res.send('User details added and userType changed to existing_user');
-            } else {
-                res.status(500).send('Failed to update user details');
-            }
-        } else if (user.userType === 'existing_user') {
-            // Update existing user fields with new values
-            const updateFields = {};
-            if (name) updateFields.name = name;
-            if (email) updateFields.email = email;
-            if (location) updateFields.location = location;
-            if (phoneNumber) updateFields.phoneNumber = phoneNumber;
-
-            const result = await userCollection.updateOne(
-                { userId },
-                { $set: updateFields }
-            );
-
-            if (result.matchedCount === 1) {
-                res.send('User details updated successfully');
+                res.send({
+                    message: 'User details updated successfully',
+                    updatedFields: updateFields
+                });
             } else {
                 res.status(500).send('Failed to update user details');
             }
         } else {
-            res.status(400).send('Invalid user type');
+            res.send({
+                message: 'No changes detected',
+                currentData: {
+                    name: user.name,
+                    email: user.email,
+                    location: user.location,
+                    phoneNumber: user.phoneNumber
+                }
+            });
         }
+
     } catch (error) {
         console.error('Error updating user details:', error);
         res.status(500).send('Error occurred while updating user details');
@@ -349,7 +350,7 @@ app.post('/fetch-battery', async (req, res) => {
 
 
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Authentication server is running on port ${PORT}`);
 });
