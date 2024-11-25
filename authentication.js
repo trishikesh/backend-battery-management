@@ -348,7 +348,59 @@ app.post('/fetch-battery', async (req, res) => {
     }
 });
 
+app.get('/battery/:batteryId', async (req, res) => {
+    try {
+        const { batteryId } = req.params;
+        const batteryCollection = client.db("test").collection("batteryData");
 
+        const battery = await batteryCollection.findOne({ _id: new MongoClient.ObjectId(batteryId) });
+
+        if (battery) {
+            res.send(battery);
+        } else {
+            res.status(404).send({ message: 'Battery not found' });
+        }
+
+    } catch (error) {
+        console.error('Error fetching individual battery details:', error);
+        res.status(500).send('Error occurred while fetching battery details');
+    }
+});
+
+app.post('/lodge-complaint', async (req, res) => {
+    try {
+        const { userId, batteryName, date, level, description } = req.body;
+        const complaintsCollection = client.db("test").collection("Complaints");
+
+        // Format the date as dd-mm-yyyy
+        const formattedDate = new Date().toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        }).replace(/\//g, '-');
+
+        const complaint = {
+            userId,
+            batteryName,
+            date,
+            level,
+            description,
+            createdAt: formattedDate
+        };
+
+        const result = await complaintsCollection.insertOne(complaint);
+
+        if (result.acknowledged) {
+            res.send({ message: 'Complaint lodged successfully' });
+        } else {
+            res.status(500).send('Failed to lodge complaint');
+        }
+
+    } catch (error) {
+        console.error('Error lodging complaint:', error);
+        res.status(500).send('Error occurred while lodging complaint');
+    }
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
