@@ -385,6 +385,7 @@ app.post('/lodge-complaint', async (req, res) => {
             date,
             level,
             description,
+            status: 'Pending', // Adding default status
             createdAt: formattedDate
         };
 
