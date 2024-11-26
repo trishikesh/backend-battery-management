@@ -41,6 +41,53 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+app.post('/create-admin', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const adminCollection = client.db("test").collection("admins");
+
+        // Check if admin already exists
+        const existingAdmin = await adminCollection.findOne({ email });
+        if (existingAdmin) {
+            return res.status(400).send('Admin already exists');
+        }
+
+        const admin = {
+            email,
+            password,
+            createdAt: new Date()
+        };
+
+        const result = await adminCollection.insertOne(admin);
+        if (result.acknowledged) {
+            res.send({ message: 'Admin created successfully' });
+        } else {
+            res.status(500).send('Failed to create admin');
+        }
+    } catch (error) {
+        console.error('Error creating admin:', error);
+        res.status(500).send('Error occurred while creating admin');
+    }
+});
+
+app.post('/admin-login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const adminCollection = client.db("test").collection("admins");
+
+        const admin = await adminCollection.findOne({ email, password });
+
+        if (admin) {
+            res.send({ message: 'Admin verified' });
+        } else {
+            res.status(401).send('Not an admin');
+        }
+    } catch (error) {
+        console.error('Error during admin login:', error);
+        res.status(500).send('Error occurred during admin login');
+    }
+});
+
 app.post('/create-user', async (req, res) => {
     const { email, password } = req.body;
     const tempUserCollection = client.db("test").collection("tempUser");
