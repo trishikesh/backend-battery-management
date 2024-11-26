@@ -465,13 +465,24 @@ app.put('/update-status', async (req, res) => {
         const { complaintNumber, newStatus } = req.body;
         const complaintsCollection = client.db("test").collection("Complaints");
 
+        // Add validation to ensure newStatus is not null/undefined
+        if (!newStatus) {
+            return res.status(400).send({ message: 'New status is required' });
+        }
+
+        // Log the values to help debug
+        console.log('Updating complaint:', { complaintNumber, newStatus });
+
         const result = await complaintsCollection.updateOne(
             { complaintNumber: complaintNumber },
             { $set: { status: newStatus } }
         );
 
         if (result.matchedCount > 0) {
-            res.send({ message: 'Complaint status updated successfully' });
+            res.send({ 
+                message: 'Complaint status updated successfully',
+                updatedStatus: newStatus 
+            });
         } else {
             res.status(404).send({ message: 'Complaint not found' });
         }
