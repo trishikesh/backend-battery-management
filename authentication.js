@@ -208,54 +208,64 @@ app.get('/get-user-info', async (req, res) => {
     }
 });
 
-app.patch('/update-user-details', async (req, res) => {
-    const { userId, name, email, location, phoneNumber } = req.body;
-    const userCollection = client.db("test").collection("User");
-
+app.put('/update-user-details', async (req, res) => {
     try {
+        const { userId, name, email, location, phone } = req.body;
+        const userCollection = client.db("test").collection("User");
+
         const user = await userCollection.findOne({ userId });
 
         if (!user) {
-            return res.status(404).send('User not registered');
+            return res.status(404).send({ message: 'User not found' });
         }
 
-        // Compare and only update changed fields
-        const updateFields = {};
-        if (name && name !== user.name) updateFields.name = name;
-        if (email && email !== user.email) updateFields.email = email;
-        if (location && location !== user.location) updateFields.location = location;
-        if (phoneNumber && phoneNumber !== user.phoneNumber) updateFields.phoneNumber = phoneNumber;
-
-        // Set userType to existing_user if it's not already
-        if (user.userType !== 'existing_user') {
-            updateFields.userType = 'existing_user';
-        }
-
-        // Only update if there are changes
-        if (Object.keys(updateFields).length > 0) {
+        if (user.userType === 'new_user') {
+            // For new users, add all fields and update to existing_user
             const result = await userCollection.updateOne(
-                { userId },
+                { userId: userId },
+                {
+                    $set: {
+                        name: name,
+                        email: email,
+                        phoneNumber: phone,
+                        location: location,
+                        userType: 'existing_user'
+                    }
+                }
+            );
+
+            if (result.modifiedCount > 0) {
+                res.send({ 
+                    message: 'User details updated and converted to existing user',
+                    userType: 'existing_user'
+                });
+            } else {
+                res.status(500).send({ message: 'Error updating user details' });
+            }
+
+        } else if (user.userType === 'existing_user') {
+            // For existing users, only update the provided fields
+            const updateFields = {};
+            if (name) updateFields.name = name;
+            if (email) updateFields.email = email;
+            if (phone) updateFields.phoneNumber = phone;
+            if (location) updateFields.location = location;
+
+            const result = await userCollection.updateOne(
+                { userId: userId },
                 { $set: updateFields }
             );
 
-            if (result.matchedCount === 1) {
-                res.send({
+            if (result.modifiedCount > 0) {
+                res.send({ 
                     message: 'User details updated successfully',
-                    updatedFields: updateFields
+                    userType: 'existing_user'
                 });
             } else {
-                res.status(500).send('Failed to update user details');
+                res.status(500).send({ message: 'Error updating user details' });
             }
         } else {
-            res.send({
-                message: 'No changes detected',
-                currentData: {
-                    name: user.name,
-                    email: user.email,
-                    location: user.location,
-                    phoneNumber: user.phoneNumber
-                }
-            });
+            res.status(400).send({ message: 'Invalid user type' });
         }
 
     } catch (error) {
