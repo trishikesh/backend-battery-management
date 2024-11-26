@@ -402,9 +402,9 @@ app.post('/lodge-complaint', async (req, res) => {
     }
 });
 
-app.get('/get-lodge-complaint', async (req, res) => {
+app.post('/get-lodge-complaint', async (req, res) => {
     try {
-        const { userId } = req.query;
+        const { userId } = req.body;
         const complaintsCollection = client.db("test").collection("Complaints");
 
         const complaints = await complaintsCollection.find({ userId: userId }).toArray();
