@@ -402,6 +402,44 @@ app.post('/lodge-complaint', async (req, res) => {
     }
 });
 
+app.get('/get-lodge-complaint', async (req, res) => {
+    try {
+        const { userId } = req.query;
+        const complaintsCollection = client.db("test").collection("Complaints");
+
+        const complaints = await complaintsCollection.find({ userId: userId }).toArray();
+
+        if (complaints.length > 0) {
+            res.send(complaints);
+        } else {
+            res.status(404).send({ message: 'No complaints found for this user' });
+        }
+
+    } catch (error) {
+        console.error('Error fetching complaints:', error);
+        res.status(500).send('Error occurred while fetching complaints');
+    }
+});
+
+app.get('/all-complaints', async (req, res) => {
+    try {
+        const complaintsCollection = client.db("test").collection("Complaints");
+        
+        const complaints = await complaintsCollection.find({}).toArray();
+
+        if (complaints.length > 0) {
+            res.send(complaints);
+        } else {
+            res.status(404).send({ message: 'No complaints found' });
+        }
+
+    } catch (error) {
+        console.error('Error fetching all complaints:', error);
+        res.status(500).send('Error occurred while fetching complaints');
+    }
+});
+
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Authentication server is running on port ${PORT}`);
