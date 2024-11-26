@@ -379,20 +379,40 @@ app.post('/lodge-complaint', async (req, res) => {
             year: 'numeric'
         }).replace(/\//g, '-');
 
+        // Generate a unique complaint number
+        let isUnique = false;
+        let complaintNumber;
+        
+        while (!isUnique) {
+            // Generate random 5 digit number
+            const randomNum = Math.floor(10000 + Math.random() * 90000);
+            complaintNumber = `COM${randomNum}`;
+            
+            // Check if this complaint number already exists
+            const existingComplaint = await complaintsCollection.findOne({ complaintNumber });
+            if (!existingComplaint) {
+                isUnique = true;
+            }
+        }
+
         const complaint = {
             userId,
             batteryName,
             date,
             level,
             description,
-            status: 'Pending', // Adding default status
-            createdAt: formattedDate
+            status: 'Pending',
+            createdAt: formattedDate,
+            complaintNumber
         };
 
         const result = await complaintsCollection.insertOne(complaint);
 
         if (result.acknowledged) {
-            res.send({ message: 'Complaint lodged successfully' });
+            res.send({ 
+                message: 'Complaint lodged successfully',
+                complaintNumber: complaintNumber 
+            });
         } else {
             res.status(500).send('Failed to lodge complaint');
         }
@@ -439,6 +459,29 @@ app.get('/all-complaints', async (req, res) => {
         res.status(500).send('Error occurred while fetching complaints');
     }
 });
+
+app.put('/update-status', async (req, res) => {
+    try {
+        const { complaintNumber, newStatus } = req.body;
+        const complaintsCollection = client.db("test").collection("Complaints");
+
+        const result = await complaintsCollection.updateOne(
+            { complaintNumber: complaintNumber },
+            { $set: { status: newStatus } }
+        );
+
+        if (result.matchedCount > 0) {
+            res.send({ message: 'Complaint status updated successfully' });
+        } else {
+            res.status(404).send({ message: 'Complaint not found' });
+        }
+
+    } catch (error) {
+        console.error('Error updating complaint status:', error);
+        res.status(500).send('Error occurred while updating complaint status');
+    }
+});
+
 
 
 const PORT = process.env.PORT || 5000;
